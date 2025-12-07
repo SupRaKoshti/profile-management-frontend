@@ -6,12 +6,14 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { api } from '../../utils/api';
+import Toast from 'react-native-toast-message';
 
 export default function Settings() {
   const router = useRouter();
@@ -57,6 +59,21 @@ export default function Settings() {
     return isValid;
   };
 
+  const showChangePasswordSuccessToast = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Password Changed',
+      text2: 'Your password has been changed successfully!',
+    });
+  }
+
+  const showChangePasswordErrorToast = (message: string) => {
+    Toast.show({
+      type: 'error',
+      text1: 'Change Failed',
+      text2: message,
+    });
+  }
   const handleChangePassword = async () => {
     if (!validatePasswordForm()) return;
 
@@ -66,12 +83,23 @@ export default function Settings() {
         old_password: oldPassword,
         new_password: newPassword,
       });
+      if (Platform.OS === 'web') {
+        showChangePasswordSuccessToast();
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        return;
+      }
 
       Alert.alert('Success', 'Password changed successfully!');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
+        if (Platform.OS === 'web') {
+            showChangePasswordErrorToast(error.response?.data?.detail || 'Failed to change password');
+            return;
+        }
       Alert.alert(
         'Failed',
         error.response?.data?.detail || 'Failed to change password'
@@ -82,6 +110,16 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = () => {
+    if (Platform.OS === 'web') {
+        const confirmed = window.confirm(
+        'Are you sure you want to delete your account? This action cannot be undone.'
+        );
+
+        if (confirmed) {
+        confirmDeleteAccount();
+        }
+        return;
+    }
     Alert.alert(
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone.',
@@ -100,6 +138,13 @@ export default function Settings() {
     setDeleteLoading(true);
     try {
       await api.delete('/profile/me');
+      
+      if (Platform.OS === 'web') {
+        window.alert('Account deleted successfully');
+        await logout();
+        router.replace('/(auth)/login');
+        return;
+      }
 
       Alert.alert(
         'Account Deleted',

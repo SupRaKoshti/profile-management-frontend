@@ -45,27 +45,45 @@ export default function Login() {
     return isValid;
   };
 
+  const showLoginSuccessToast = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Login Successful',
+      text2: 'Welcome back!',
+    });
+  };
+
+  const showLoginErrorToast = (message: string) => {
+    Toast.show({
+      type: 'error',
+      text1: 'Login Failed',
+      text2: message,
+    });
+  };
+
   const handleLogin = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
+
     try {
       await login({ email, password });
-      useEffect(() => {
-        Toast.show({
-          type: 'success',
-          text1: 'Toast Test',
-          text2: 'If you see this, Toast is working!',
-        });
-      }, []);
       router.replace('/(tabs)/profile');
+      setTimeout(() => {
+        showLoginSuccessToast();
+      }, 100);
     } catch (error: any) {
-      Alert.alert(
-        'Login Failed',
-        error.response?.data?.detail || 'Invalid email or password'
-      );
+        if (Platform.OS === 'web' ){
+          showLoginErrorToast(error.response?.data?.detail || 'Invalid email or password');
+          return;
+        } else {
+          Alert.alert(
+            'Login Failed',
+            error.response?.data?.detail || 'Invalid email or password'
+          );
+        }
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 

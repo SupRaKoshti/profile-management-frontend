@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
+import Toast from 'react-native-toast-message';
 
 export default function Signup() {
   const router = useRouter();
@@ -55,18 +56,42 @@ export default function Signup() {
     return isValid;
   };
 
+  const showSignupSuccessToast = () => {
+    Toast.show({
+      type: 'success',  
+      text1: 'Signup Successful',
+      text2: 'Welcome aboard! You can now log in.',
+    });
+  };
+
+  const showSignupErrorToast = (message: string) => {
+    Toast.show({
+      type: 'error',
+      text1: 'Signup Failed',
+      text2: message,
+    });
+  };
+
   const handleSignup = async () => {
     if (!validateForm()) return;
-
+    
     setLoading(true);
     try {
       await signup({ name, email, password });
-      router.replace('/(tabs)/profile');
+      router.replace('/(auth)/login');
+      setTimeout(() => {
+        showSignupSuccessToast();
+      }, 100);
     } catch (error: any) {
+      if (Platform.OS === 'web' ){
+        showSignupErrorToast(error.response?.data?.detail || 'Failed to create account');
+        return;
+      } else {
       Alert.alert(
         'Signup Failed',
         error.response?.data?.detail || 'Failed to create account'
       );
+    }
     } finally {
       setLoading(false);
     }

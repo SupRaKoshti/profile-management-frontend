@@ -14,6 +14,8 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { ProfileStrengthMeter } from '../../components/ProfileStrengthMeter';
 import { api } from '../../utils/api';
+import Toast from 'react-native-toast-message';
+import Profile from './profile';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -43,6 +45,22 @@ export default function EditProfile() {
     return isValid;
   };
 
+  const showSuccessEditToast = () => {
+    Toast.show({
+      type: 'success', 
+      text1: 'Profile Updated',
+      text2: 'Your profile has been updated successfully!',
+    });
+  }
+
+  const showErrorEditToast = (message: string) => {
+    Toast.show({
+      type: 'error',
+      text1: 'Update Failed',
+      text2: message,
+    });
+  }
+
   const handleSave = async () => {
     if (!validateForm()) return;
 
@@ -52,6 +70,16 @@ export default function EditProfile() {
         name: name.trim(),
         bio: bio.trim() || null,
       });
+
+      if (Platform.OS === 'web') {
+        try{
+          router.back();
+          showSuccessEditToast();
+          return;
+        } catch (error: any) {
+          showErrorEditToast(error.response?.data?.detail || 'Failed to update Profile');
+        }
+      }
 
       Alert.alert('Success', 'Profile updated successfully!', [
         {
