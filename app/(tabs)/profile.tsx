@@ -19,7 +19,6 @@ export default function Profile() {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    console.log('Logout initiated');
     
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Are you sure you want to logout?');

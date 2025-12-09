@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 import { storage } from '../utils/storage';
-import { User, LoginRequest, SignupRequest, TokenResponse } from '../types';
+import { User, LoginRequest, SignupRequestResponse, TokenResponse } from '../types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  signup: (data: SignupRequest) => Promise<void>;
+  signup: (data: SignupRequestResponse) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -47,18 +47,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userResponse.data);
   };
 
-  const signup = async (data: SignupRequest) => {
-    const response = await api.post<TokenResponse>('/auth/signup', data);
-    await storage.setToken(response.data.access_token);
-    
-    // Fetch user data
-    const userResponse = await api.get<User>('/profile/me');
-    setUser(userResponse.data);
+  const signup = async (data: SignupRequestResponse) => {
+    const response = await api.post('/auth/signup', data);
   };
 
   const logout = async () => {
-    await storage.removeToken();
-    setUser(null);
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      await storage.removeToken();
+      setUser(null);
+    }
   };
 
   return (
